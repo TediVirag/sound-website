@@ -72,11 +72,22 @@ def init_db():
                 rating1 NUMERIC(5,2) NOT NULL,
                 emotion2 VARCHAR(50),
                 rating2 NUMERIC(5,2),
-                FOREIGN KEY (user_code) REFERENCES submissions(user_code) ON DELETE CASCADE
+                FOREIGN KEY (user_code) REFERENCES submissions(user_code) ON DELETE CASCADE,
+                FOREIGN KEY (sound_code) REFERENCES sound_samples(sound_code) ON DELETE CASCADE
+            )
+        ''')
+
+        print("Created 'results' table.")
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sound_samples (
+                sound_code VARCHAR(50) NOT NULL,
+                result_num NUMERIC NOT NULL DEFAULT 0,
+                PRIMARY KEY (sound_code)
             )
         ''')
         
-        print("Created 'results' table.")
+        print("Created 'sound_samples' table.")
         
         # Create indexes for better query performance
         cursor.execute('''

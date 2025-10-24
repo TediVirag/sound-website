@@ -76,6 +76,12 @@ def submit_questionnaire():
                 result.get('emotion2') if result.get('emotion2') else None,
                 int(result.get('rating2')) if result.get('rating2') else None
             ))
+
+            cursor.execute('''
+                UPDATE sound_samples 
+                SET result_num = result_num + 1
+                WHERE sound_code=  %s;
+            ''', (result.get('sound_code'),))
         
         conn.commit()
         

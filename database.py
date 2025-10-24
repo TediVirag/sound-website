@@ -3,7 +3,7 @@ from psycopg2 import sql
 import os
 from dotenv import load_dotenv
 
-def get_db_config():
+def get_config():
     """Get database configuration from environment variables or use defaults"""
     load_dotenv()
     return {
@@ -11,12 +11,13 @@ def get_db_config():
         'user': os.getenv('DB_USER', 'postgres'),
         'password': os.getenv('DB_PASSWORD', 'postgres'),
         'host': os.getenv('DB_HOST', 'localhost'),
-        'port': os.getenv('DB_PORT', '5432')
+        'port': os.getenv('DB_PORT', '5432'),
+        'soundfolder': os.getenv('SOUND_FOLDER', 'sound_files')
     }
 
 def init_db():
     """Initialize the database with a questionnaire responses table"""
-    config = get_db_config()
+    config = get_config()
     
     try:
         # Connect to PostgreSQL server (to default 'postgres' database first)
@@ -39,13 +40,6 @@ def init_db():
             print(f"Database '{config['dbname']}' created successfully!")
         else:
             print(f"Database '{config['dbname']}' already exists.")
-        
-        cursor.close()
-        conn.close()
-        
-        # Connect to the questionnaire database
-        conn = psycopg2.connect(**config)
-        cursor = conn.cursor()
         
         # Create the submissions table
         cursor.execute('''
@@ -99,11 +93,13 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_results_code 
             ON results(sound_code)
         ''')
-        
-        
+
         conn.commit()
         cursor.close()
         conn.close()
+
+        # Populate sound_samples table
+        populate_sound_samples()
         
         print("Database tables initialized successfully!")
         
@@ -113,6 +109,91 @@ def init_db():
     except Exception as e:
         print(f"Error: {e}")
         raise
+
+def populate_sound_samples():
+    """
+    Scan sound files and add them to sound_samples table if not already present.
+    Sets result_num to DEFAULT 0 for new entries.
+    
+    Args:
+        static_folder: Path to your static folder
+    """
+    config = get_config()
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    sounds_dir = os.path.join(project_root, 'static', config['soundfolder'])
+    
+    # Check if sounds directory exists
+    if not os.path.exists(sounds_dir):
+        print(f"Error: Sounds directory not found at {sounds_dir}")
+        print("Please create static/sounds/ folder and add .wav files.")
+        return
+    
+    # Get all .wav files
+    sound_files = [f for f in os.listdir(sounds_dir) if f.endswith('.wav')]
+    
+    if not sound_files:
+        print(f"No .wav files found in {sounds_dir}")
+        return
+    
+    # Sort files alphabetically
+    sound_files.sort()
+    
+    print(f"Found {len(sound_files)} sound file(s)")
+    
+    # Connect to database
+    conn = psycopg2.connect(
+        dbname=config['dbname'],
+        user=config['user'],
+        password=config['password'],
+        host=config['host'],
+        port=config['port']
+    )
+    conn.autocommit = True
+    cursor = conn.cursor()
+    
+    added_count = 0
+    skipped_count = 0
+    
+    for filename in sound_files:
+        # Remove .wav extension to get sound_code
+        sound_code = filename.replace('.wav', '')
+        
+        try:
+            # Check if sound_code already exists
+            cursor.execute(
+                "SELECT COUNT(*) FROM sound_samples WHERE sound_code = %s",
+                (sound_code,)
+            )
+            exists = cursor.fetchone()[0] > 0
+            
+            if exists:
+                print(f"  Skipped (already exists): {sound_code}")
+                skipped_count += 1
+            else:
+                # Insert new sound_code with result_num = 0
+                cursor.execute(
+                    "INSERT INTO sound_samples (sound_code) VALUES (%s)",
+                    (sound_code,)
+                )
+                conn.commit()
+                print(f"  Added: {sound_code}")
+                added_count += 1
+                
+        except Exception as e:
+            print(f"  Error processing {sound_code}: {e}")
+            conn.rollback()
+    
+    # Close database connection
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    conn.close()
+    
+    print(f"\nSummary:")
+    print(f"  Added: {added_count}")
+    print(f"  Skipped: {skipped_count}")
+    print(f"  Total: {len(sound_files)}")
 
 if __name__ == '__main__':
     init_db()

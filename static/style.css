@@ -70,6 +70,36 @@ h3 {
     margin-bottom: 20px;
 }
 
+/* Audio player styling */
+.audio-player {
+    margin: 20px 0;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(248, 177, 172, 0.1) 0%, rgba(110, 76, 197, 0.1) 100%);
+    border-radius: 10px;
+    border: 2px solid #f8b1ac;
+}
+
+.audio-player audio {
+    width: 100%;
+    outline: none;
+}
+
+/* Custom audio player styling (for browsers that support it) */
+.audio-player audio::-webkit-media-controls-panel {
+    background-color: white;
+}
+
+.audio-player audio::-webkit-media-controls-play-button,
+.audio-player audio::-webkit-media-controls-pause-button {
+    background-color: #6e4cc5;
+    border-radius: 50%;
+}
+
+.audio-player audio::-webkit-media-controls-current-time-display,
+.audio-player audio::-webkit-media-controls-time-remaining-display {
+    color: #333;
+}
+
 label {
     display: block;
     margin-bottom: 8px;

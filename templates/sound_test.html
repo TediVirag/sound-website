@@ -62,58 +62,35 @@
                     </div>
                 </div>
                 
-                <!-- Emotion Ratings Section -->
-                <div class="section">
-                    <h2>Emotion Ratings</h2>
-                    <p class="info-text">Rate the following sounds. You can add 1 or 2 emotions and their strength ratings.</p>
+                <!-- Sound Selection Section -->
+                <div class="section" id="soundSelectionSection">
+                    <h2>Sound Rating</h2>
+                    <p class="info-text">How many sounds would you like to rate?</p>
                     
-                    <div id="emotionRatings">
-                        <div class="emotion-rating-item" data-index="0">
-                            <h3>Rating #1</h3>
-                            
-                            <div class="form-group">
-                                <label for="emotion1_0">Primary Emotion *</label>
-                                <select id="emotion1_0" name="emotion1_0" class="emotion-select" data-index="0" data-type="primary" required>
-                                    <option value="">-- Select --</option>
-                                    <option value="Happiness">Happiness</option>
-                                    <option value="Sadness">Sadness</option>
-                                    <option value="Anger">Anger</option>
-                                    <option value="Fear">Fear</option>
-                                    <option value="Surprise">Surprise</option>
-                                    <option value="Disgust">Disgust</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="rating1_0">Primary Rating (1-5) *</label>
-                                <input type="number" id="rating1_0" name="rating1_0" class="rating-input" data-index="0" data-type="primary" min="1" max="5" step="1" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="emotion2_0">Secondary Emotion (Optional)</label>
-                                <select id="emotion2_0" name="emotion2_0" class="emotion-select" data-index="0" data-type="secondary">
-                                    <option value="">-- Select --</option>
-                                    <option value="Happiness">Happiness</option>
-                                    <option value="Sadness">Sadness</option>
-                                    <option value="Anger">Anger</option>
-                                    <option value="Fear">Fear</option>
-                                    <option value="Surprise">Surprise</option>
-                                    <option value="Disgust">Disgust</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="rating2_0">Secondary Rating (1-5)</label>
-                                <input type="number" id="rating2_0" name="rating2_0" class="rating-input" data-index="0" data-type="secondary" min="1" max="5" step="1">
-                            </div>
-                        </div>
+                    <div class="form-group">
+                        <label for="numSounds">Number of Sounds *</label>
+                        <select id="numSounds" name="numSounds">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                        </select>
                     </div>
                     
-                    <button type="button" class="add-rating-btn" onclick="addEmotionRating()">+ Add Another Rating</button>
+                    <button type="button" class="submit-btn" onclick="loadSounds()">Load Sounds</button>
                 </div>
                 
-                <!-- Feedback Section -->
-                <div class="section">
+                <!-- Emotion Ratings Section (Initially Hidden) -->
+                <div class="section" id="emotionRatingsSection" style="display: none;">
+                    <h2>Emotion Ratings</h2>
+                    <p class="info-text">Listen to each sound and rate the emotions you feel. You can select 1 or 2 emotions per sound.</p>
+                    
+                    <div id="emotionRatings">
+                        <!-- Sound rating items will be dynamically added here -->
+                    </div>
+                </div>
+                
+                <!-- Feedback Section (Initially Hidden) -->
+                <div class="section" id="feedbackSection" style="display: none;">
                     <h2>Additional Feedback</h2>
                     
                     <div class="form-group">
@@ -122,7 +99,7 @@
                     </div>
                 </div>
                 
-                <button type="submit" class="submit-btn">Submit Questionnaire</button>
+                <button type="submit" class="submit-btn" id="submitBtn" style="display: none;">Submit Questionnaire</button>
             </form>
             
             <div id="message" class="message"></div>
@@ -130,12 +107,120 @@
     </div>
     
     <script>
-        let ratingCount = 1;
+        let soundFiles = [];
+        let ratingCount = 0;
         
-        // Add validation listeners to existing fields
-        document.addEventListener('DOMContentLoaded', function() {
-            setupValidationListeners();
-        });
+        async function loadSounds() {
+            const numSounds = document.getElementById('numSounds').value;
+            
+            try {
+                // Fetch sound files from backend
+                const response = await fetch(`/get-sounds?count=${numSounds}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = data.message || 'Error loading sounds.';
+                    return;
+                }
+                
+                soundFiles = data.sounds;
+                
+                if (soundFiles.length === 0) {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = 'No sound files available.';
+                    return;
+                }
+                
+                // Hide sound selection section
+                document.getElementById('soundSelectionSection').style.display = 'none';
+                
+                // Show emotion ratings section
+                document.getElementById('emotionRatingsSection').style.display = 'block';
+                document.getElementById('feedbackSection').style.display = 'block';
+                document.getElementById('submitBtn').style.display = 'block';
+                
+                // Clear any existing ratings
+                document.getElementById('emotionRatings').innerHTML = '';
+                ratingCount = 0;
+                
+                // Create rating items for each sound
+                soundFiles.forEach((soundPath, index) => {
+                    createRatingItem(index, soundPath);
+                });
+                
+                // Setup validation listeners
+                setupValidationListeners();
+                
+                // Clear any previous messages
+                messageDiv.style.display = 'none';
+                
+            } catch (error) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'Error loading sounds: ' + error.message;
+            }
+        }
+        
+        function createRatingItem(index, soundPath) {
+            const container = document.getElementById('emotionRatings');
+            const newRating = document.createElement('div');
+            newRating.className = 'emotion-rating-item';
+            newRating.dataset.index = index;
+            
+            // Extract filename for display
+            const filename = soundPath.split(/[/\\]/).pop().replace(/\.wav$/i, '');
+            
+            newRating.innerHTML = `
+                <h3>Sound #${index + 1} - ${filename}</h3>
+                
+                <!-- Audio Player -->
+                <div class="audio-player">
+                    <audio id="audio_${index}" controls preload="metadata">
+                        <source src="${soundPath}" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
+                </div>
+                
+                <div class="form-group">
+                    <label for="emotion1_${index}">Primary Emotion *</label>
+                    <select id="emotion1_${index}" name="emotion1_${index}" class="emotion-select" data-index="${index}" data-type="primary" required>
+                        <option value="">-- Select --</option>
+                        <option value="Happiness">Happiness</option>
+                        <option value="Sadness">Sadness</option>
+                        <option value="Anger">Anger</option>
+                        <option value="Fear">Fear</option>
+                        <option value="Surprise">Surprise</option>
+                        <option value="Disgust">Disgust</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="rating1_${index}">Primary Rating (1-5) *</label>
+                    <input type="number" id="rating1_${index}" name="rating1_${index}" class="rating-input" data-index="${index}" data-type="primary" min="1" max="5" step="1" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="emotion2_${index}">Secondary Emotion (Optional)</label>
+                    <select id="emotion2_${index}" name="emotion2_${index}" class="emotion-select" data-index="${index}" data-type="secondary">
+                        <option value="">-- Select --</option>
+                        <option value="Happiness">Happiness</option>
+                        <option value="Sadness">Sadness</option>
+                        <option value="Anger">Anger</option>
+                        <option value="Fear">Fear</option>
+                        <option value="Surprise">Surprise</option>
+                        <option value="Disgust">Disgust</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="rating2_${index}">Secondary Rating (1-5)</label>
+                    <input type="number" id="rating2_${index}" name="rating2_${index}" class="rating-input" data-index="${index}" data-type="secondary" min="1" max="5" step="1">
+                </div>
+            `;
+            
+            container.appendChild(newRating);
+            ratingCount = index + 1;
+        }
         
         function setupValidationListeners() {
             // For all emotion selects and rating inputs
@@ -178,68 +263,6 @@
             }
         }
         
-        function addEmotionRating() {
-            const container = document.getElementById('emotionRatings');
-            const newRating = document.createElement('div');
-            newRating.className = 'emotion-rating-item';
-            newRating.dataset.index = ratingCount;
-            
-            newRating.innerHTML = `
-                <h3>Rating #${ratingCount + 1}</h3>
-                
-                <div class="form-group">
-                    <label for="emotion1_${ratingCount}">Primary Emotion *</label>
-                    <select id="emotion1_${ratingCount}" name="emotion1_${ratingCount}" class="emotion-select" data-index="${ratingCount}" data-type="primary" required>
-                        <option value="">-- Select --</option>
-                        <option value="Happiness">Happiness</option>
-                        <option value="Sadness">Sadness</option>
-                        <option value="Anger">Anger</option>
-                        <option value="Fear">Fear</option>
-                        <option value="Surprise">Surprise</option>
-                        <option value="Disgust">Disgust</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="rating1_${ratingCount}">Primary Rating (1-5) *</label>
-                    <input type="number" id="rating1_${ratingCount}" name="rating1_${ratingCount}" class="rating-input" data-index="${ratingCount}" data-type="primary" min="1" max="5" step="1" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="emotion2_${ratingCount}">Secondary Emotion (Optional)</label>
-                    <select id="emotion2_${ratingCount}" name="emotion2_${ratingCount}" class="emotion-select" data-index="${ratingCount}" data-type="secondary">
-                        <option value="">-- Select --</option>
-                        <option value="Happiness">Happiness</option>
-                        <option value="Sadness">Sadness</option>
-                        <option value="Anger">Anger</option>
-                        <option value="Fear">Fear</option>
-                        <option value="Surprise">Surprise</option>
-                        <option value="Disgust">Disgust</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="rating2_${ratingCount}">Secondary Rating (1-5)</label>
-                    <input type="number" id="rating2_${ratingCount}" name="rating2_${ratingCount}" class="rating-input" data-index="${ratingCount}" data-type="secondary" min="1" max="5" step="1">
-                </div>
-                
-                <button type="button" class="remove-rating-btn" onclick="removeEmotionRating(${ratingCount})">Remove This Rating</button>
-            `;
-            
-            container.appendChild(newRating);
-            ratingCount++;
-            
-            // Setup validation for the newly added fields
-            setupValidationListeners();
-        }
-        
-        function removeEmotionRating(index) {
-            const item = document.querySelector(`[data-index="${index}"]`);
-            if (item) {
-                item.remove();
-            }
-        }
-        
         document.getElementById('questionnaireForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -262,7 +285,7 @@
                 if (emotion1 && !rating1) {
                     validationError = true;
                     messageDiv.className = 'message error';
-                    messageDiv.textContent = `Error: Please provide a rating for the primary emotion in Rating #${parseInt(index) + 1}`;
+                    messageDiv.textContent = `Error: Please provide a rating for the primary emotion in Sound #${parseInt(index) + 1}`;
                     return;
                 }
                 
@@ -270,19 +293,24 @@
                 if (emotion2 && !rating2) {
                     validationError = true;
                     messageDiv.className = 'message error';
-                    messageDiv.textContent = `Error: Please provide a rating for the secondary emotion in Rating #${parseInt(index) + 1}`;
+                    messageDiv.textContent = `Error: Please provide a rating for the secondary emotion in Sound #${parseInt(index) + 1}`;
                     return;
                 }
                 
                 if (rating2 && !emotion2) {
                     validationError = true;
                     messageDiv.className = 'message error';
-                    messageDiv.textContent = `Error: Please select a secondary emotion for Rating #${parseInt(index) + 1}`;
+                    messageDiv.textContent = `Error: Please select a secondary emotion for Sound #${parseInt(index) + 1}`;
                     return;
                 }
                 
                 if (emotion1 && rating1) {
+                    // Get the sound file path for this rating
+                    const soundPath = soundFiles[index];
+                    const sound_code = soundPath.split(/[/\\]/).pop().replace(/\.wav$/i, '');
+                    
                     results.push({
+                        sound_code: sound_code,
                         emotion1: emotion1,
                         rating1: rating1,
                         emotion2: emotion2 || null,
@@ -322,17 +350,18 @@
                     messageDiv.innerHTML = `
                         ${result.message}<br>
                         <strong>Your submission code: ${result.code}</strong><br>
-                        <small>Please save this code for your records. This will allow you to ask for your data to be removed.</small>
+                        <small>Please save this code for your records.</small>
                     `;
                     this.reset();
                     
-                    // Reset to single rating
-                    const container = document.getElementById('emotionRatings');
-                    const items = container.querySelectorAll('.emotion-rating-item');
-                    items.forEach((item, index) => {
-                        if (index > 0) item.remove();
-                    });
-                    ratingCount = 1;
+                    // Reset the form to initial state
+                    document.getElementById('soundSelectionSection').style.display = 'block';
+                    document.getElementById('emotionRatingsSection').style.display = 'none';
+                    document.getElementById('feedbackSection').style.display = 'none';
+                    document.getElementById('submitBtn').style.display = 'none';
+                    document.getElementById('emotionRatings').innerHTML = '';
+                    soundFiles = [];
+                    ratingCount = 0;
                 } else {
                     messageDiv.className = 'message error';
                     messageDiv.textContent = 'Error: ' + result.message;

@@ -1,7 +1,9 @@
-from flask import Flask, render_template, request, jsonify
-from dotenv import load_dotenv
-import os
+from flask import Flask, render_template, request, jsonify, url_for
 import psycopg2
+from psycopg2.extras import RealDictCursor
+import os
+from datetime import datetime
+from dotenv import load_dotenv
 import secrets
 import string
 
@@ -18,6 +20,11 @@ def get_db_config():
         'port': os.getenv('DB_PORT', '5432')
     }
 
+def get_sound_folder_config():
+    """Get sound folder configuration from environment variables or use defaults"""
+    load_dotenv()
+    return os.getenv('SOUND_FOLDER', 'sound_files')
+
 def get_db_connection():
     """Create a connection to PostgreSQL database"""
     config = get_db_config()
@@ -32,6 +39,49 @@ def generate_unique_code(length=10):
 @app.route('/')
 def index():
     return render_template('sound_test.html')
+
+@app.route('/get-sounds')
+def get_sounds():
+    """Return list of available sound files with full paths"""
+    count = request.args.get('count', type=str, default=10)
+    
+    sounds_dir = os.path.join(app.static_folder, get_sound_folder_config())
+    
+    # Check if sounds directory exists
+    if not os.path.exists(sounds_dir):
+        return jsonify({
+            'success': False,
+            'message': f'Sounds directory not found. Please create {sounds_dir} folder and add .wav files.'
+        })
+    
+    # Get all .wav files
+    sound_files = [f for f in os.listdir(sounds_dir) if f.endswith('.wav')]
+    
+    if not sound_files:
+        return jsonify({
+            'success': False,
+            'message': 'No .wav files found in the sounds directory.'
+        })
+    
+    # Sort files alphabetically
+    sound_files.sort()
+    
+    # Limit to requested count
+    try:
+        limit = int(count)
+        sound_files = sound_files[:limit]
+    except ValueError:
+        # If count is not convertible to int, skip limiting
+        pass
+    
+    # Generate full URLs for each sound file
+    sound_urls = [url_for('static', filename=f'{get_sound_folder_config()}/{filename}') for filename in sound_files]
+    
+    return jsonify({
+        'success': True,
+        'sounds': sound_urls,
+        'count': len(sound_urls)
+    })
 
 @app.route('/submit', methods=['POST'])
 def submit_questionnaire():

@@ -74,6 +74,7 @@
                     <div class="form-group">
                         <label for="numSounds">Number of Sounds *</label>
                         <select id="numSounds" name="numSounds">
+                            <option value="1">1</option>
                             <option value="5">5</option>
                             <option value="10">10</option>
                             <option value="20">20</option>
@@ -108,6 +109,18 @@
             
             <div id="message" class="message"></div>
         </div>
+    </div>
+
+    <!-- Modal for Success Message -->
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-success" id="modalSuccess">
+        <div class="success-icon">&#x2714;</div>
+        <div class="modal-message" id="modalMessage"></div>
+        <div class="modal-code" id="modalCode"></div>
+        <div class="modal-info" id="modalInfo" style="font-size:.97em;color:#333;margin-bottom:8px;">
+            Make sure to save this code — you’ll need it if you want your data deleted.
+        </div>
+        <button id="fillAgainBtn" type="button">Fill Another Questionnaire</button>
     </div>
     
     <script>
@@ -339,7 +352,38 @@
                 emotionSelect.required = false;
             }
         }
-        
+
+        // Modal logic
+        function showSuccessModal(message, code) {
+            document.getElementById('modalMessage').innerHTML = message;
+            document.getElementById('modalCode').innerHTML = code
+                ? '<strong>Your submission code: ' + code + '</strong>'
+                : '';
+            document.getElementById('modalBackdrop').classList.add('active');
+            document.getElementById('modalSuccess').classList.add('active');
+        }
+        function hideSuccessModal() {
+            document.getElementById('modalBackdrop').classList.remove('active');
+            document.getElementById('modalSuccess').classList.remove('active');
+        }
+        document.getElementById('fillAgainBtn').addEventListener('click', function() {
+            hideSuccessModal();
+            // Reset the form to initial state
+            document.getElementById('questionnaireForm').reset();
+            document.getElementById('soundSelectionSection').style.display = 'block';
+            document.getElementById('emotionRatingsSection').style.display = 'none';
+            document.getElementById('feedbackSection').style.display = 'none';
+            document.getElementById('submitBtn').style.display = 'none';
+            document.getElementById('emotionRatings').innerHTML = '';
+            document.getElementById('message').textContent = '';
+            document.getElementById('message').className = 'message';
+            soundFiles = [];
+            ratingCount = 0;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        document.getElementById('modalBackdrop').addEventListener('click', hideSuccessModal);
+
+
         document.getElementById('questionnaireForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -482,15 +526,11 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    messageDiv.className = 'message success';
-                    messageDiv.innerHTML = `
-                        ${result.message}<br>
-                        <strong>Your submission code: ${result.code}</strong><br>
-                        <small>Please save this code for your records. This allows you to ask for your information to be deleted by the administrators of this website.</small>
-                    `;
-                    this.reset();
-                    
-                    // Reset the form to initial state
+                    // Show modal instead of inline message
+                    showSuccessModal(result.message, result.code);
+
+                    // Reset the form (state for next time)
+                    document.getElementById('questionnaireForm').reset();
                     document.getElementById('soundSelectionSection').style.display = 'block';
                     document.getElementById('emotionRatingsSection').style.display = 'none';
                     document.getElementById('feedbackSection').style.display = 'none';
@@ -498,9 +538,7 @@
                     document.getElementById('emotionRatings').innerHTML = '';
                     soundFiles = [];
                     ratingCount = 0;
-                    
-                    // Scroll to success message
-                    messageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
                 } else {
                     messageDiv.className = 'message error';
                     messageDiv.textContent = 'Error: ' + result.message;

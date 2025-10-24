@@ -63,21 +63,46 @@ def get_sounds():
             'message': 'No .wav files found in the sounds directory.'
         })
     
-    # Sort files alphabetically
-    sound_files.sort()
+    # Get sound samples' submission counts from database
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    sound_codes = [os.path.splitext(os.path.basename(path))[0] for path in sound_files]
+
+    # Prepare query to preserve order by result_num
+    format_strings = ','.join(['%s'] * len(sound_codes))
+    query = f"""
+        SELECT sound_code, result_num
+        FROM sound_samples
+        WHERE sound_code IN ({format_strings})
+        ORDER BY result_num ASC
+    """
+    cursor.execute(query, tuple(sound_codes))
+    rows = cursor.fetchall()
+
+    # Create a mapping from sound_code to full file path for lookup
+    code_to_path = {os.path.splitext(os.path.basename(path))[0]: path for path in sound_files}
+
+    # Now, produce the sorted list of file paths according to result_num order
+    ordered_sound_files = [code_to_path[row[0]] for row in rows]
     
     # Limit to requested count
     try:
         limit = int(count)
-        sound_files = sound_files[:limit]
+        ordered_sound_files = ordered_sound_files[:limit]
     except ValueError:
         return jsonify({
-        'success': False,
-        'message': 'Count is not convertible to int.'
-    })
+            'success': False,
+            'message': 'Count is not convertible to int.'
+        })
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
     
     # Generate full URLs for each sound file
-    sound_urls = [url_for('static', filename=f'{get_sound_folder_config()}/{filename}') for filename in sound_files]
+    sound_urls = [url_for('static', filename=f'{get_sound_folder_config()}/{filename}') for filename in ordered_sound_files]
     
     return jsonify({
         'success': True,

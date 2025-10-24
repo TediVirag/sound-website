@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Rating Questionnaire</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ url_for('static', filename='favicon.png') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="questionnaire-box">
+            <h1>Emotion Rating Questionnaire</h1>
+            <p class="subtitle">Please complete the following questionnaire</p>
+            
+            <form id="questionnaireForm">
+                <!-- Demographics Section -->
+                <div class="section">
+                    <h2>Demographics</h2>
+                    
+                    <div class="form-group">
+                        <label for="age">Age *</label>
+                        <input type="number" id="age" name="age" min="1" max="120" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="gender">Gender *</label>
+                        <select id="gender" name="gender" required>
+                            <option value="">-- Select --</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Non-binary">Non-binary</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="highest_education">Highest Education *</label>
+                        <select id="highest_education" name="highest_education" required>
+                            <option value="">-- Select --</option>
+                            <option value="Less than high school">Less than high school</option>
+                            <option value="High school">High school</option>
+                            <option value="Some college">Some college</option>
+                            <option value="Bachelor's degree">Bachelor's degree</option>
+                            <option value="Master's degree">Master's degree</option>
+                            <option value="Doctoral degree">Doctoral degree</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Have you completed this questionnaire before? *</label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="submitted_before" value="true" required>
+                                Yes
+                            </label>
+                            <label>
+                                <input type="radio" name="submitted_before" value="false">
+                                No
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Emotion Ratings Section -->
+                <div class="section">
+                    <h2>Emotion Ratings</h2>
+                    <p class="info-text">Rate the following sounds. You can add 1 or 2 emotions and their strength ratings.</p>
+                    
+                    <div id="emotionRatings">
+                        <div class="emotion-rating-item" data-index="0">
+                            <h3>Rating #1</h3>
+                            
+                            <div class="form-group">
+                                <label for="emotion1_0">Primary Emotion *</label>
+                                <select id="emotion1_0" name="emotion1_0" required>
+                                    <option value="">-- Select --</option>
+                                    <option value="Happiness">Happiness</option>
+                                    <option value="Sadness">Sadness</option>
+                                    <option value="Anger">Anger</option>
+                                    <option value="Fear">Fear</option>
+                                    <option value="Surprise">Surprise</option>
+                                    <option value="Disgust">Disgust</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="rating1_0">Primary Rating (1-5) *</label>
+                                <input type="number" id="rating1_0" name="rating1_0" min="1" max="5" step="1" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="emotion2_0">Secondary Emotion (Optional)</label>
+                                <select id="emotion2_0" name="emotion2_0">
+                                    <option value="">-- Select --</option>
+                                    <option value="Happiness">Happiness</option>
+                                    <option value="Sadness">Sadness</option>
+                                    <option value="Anger">Anger</option>
+                                    <option value="Fear">Fear</option>
+                                    <option value="Surprise">Surprise</option>
+                                    <option value="Disgust">Disgust</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="rating2_0">Secondary Rating (1-5)</label>
+                                <input type="number" id="rating2_0" name="rating2_0" min="1" max="5" step="1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="add-rating-btn" onclick="addEmotionRating()">+ Add Another Rating</button>
+                </div>
+                
+                <!-- Feedback Section -->
+                <div class="section">
+                    <h2>Additional Feedback</h2>
+                    
+                    <div class="form-group">
+                        <label for="feedback">Comments (Optional)</label>
+                        <textarea id="feedback" name="feedback" rows="4" placeholder="Any additional thoughts or feedback..."></textarea>
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn">Submit Questionnaire</button>
+            </form>
+            
+            <div id="message" class="message"></div>
+        </div>
+    </div>
+    
+    <script>
+        let ratingCount = 1;
+        
+        function addEmotionRating() {
+            const container = document.getElementById('emotionRatings');
+            const newRating = document.createElement('div');
+            newRating.className = 'emotion-rating-item';
+            newRating.dataset.index = ratingCount;
+            
+            newRating.innerHTML = `
+                <h3>Rating #${ratingCount + 1}</h3>
+                
+                <div class="form-group">
+                    <label for="emotion1_${ratingCount}">Primary Emotion *</label>
+                    <select id="emotion1_${ratingCount}" name="emotion1_${ratingCount}" required>
+                        <option value="">-- Select --</option>
+                        <option value="Happiness">Happiness</option>
+                        <option value="Sadness">Sadness</option>
+                        <option value="Anger">Anger</option>
+                        <option value="Fear">Fear</option>
+                        <option value="Surprise">Surprise</option>
+                        <option value="Disgust">Disgust</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="rating1_${ratingCount}">Primary Rating (1-5) *</label>
+                    <input type="number" id="rating1_${ratingCount}" name="rating1_${ratingCount}" min="1" max="5" step="1" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="emotion2_${ratingCount}">Secondary Emotion (Optional)</label>
+                    <select id="emotion2_${ratingCount}" name="emotion2_${ratingCount}">
+                        <option value="">-- Select --</option>
+                        <option value="Happiness">Happiness</option>
+                        <option value="Sadness">Sadness</option>
+                        <option value="Anger">Anger</option>
+                        <option value="Fear">Fear</option>
+                        <option value="Surprise">Surprise</option>
+                        <option value="Disgust">Disgust</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="rating2_${ratingCount}">Secondary Rating (1-5)</label>
+                    <input type="number" id="rating2_${ratingCount}" name="rating2_${ratingCount}" min="1" max="5" step="1">
+                </div>
+                
+                <button type="button" class="remove-rating-btn" onclick="removeEmotionRating(${ratingCount})">Remove This Rating</button>
+            `;
+            
+            container.appendChild(newRating);
+            ratingCount++;
+        }
+        
+        function removeEmotionRating(index) {
+            const item = document.querySelector(`[data-index="${index}"]`);
+            if (item) {
+                item.remove();
+            }
+        }
+        
+        document.getElementById('questionnaireForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const messageDiv = document.getElementById('message');
+            
+            // Collect all emotion ratings
+            const results = [];
+            const ratingItems = document.querySelectorAll('.emotion-rating-item');
+            
+            ratingItems.forEach(item => {
+                const index = item.dataset.index;
+                const emotion1 = formData.get(`emotion1_${index}`);
+                const rating1 = formData.get(`rating1_${index}`);
+                const emotion2 = formData.get(`emotion2_${index}`);
+                const rating2 = formData.get(`rating2_${index}`);
+                
+                if (emotion1 && rating1) {
+                    results.push({
+                        emotion1: emotion1,
+                        rating1: rating1,
+                        emotion2: emotion2 || null,
+                        rating2: rating2 || null
+                    });
+                }
+            });
+            
+            // Prepare submission data
+            const data = {
+                age: formData.get('age'),
+                gender: formData.get('gender'),
+                highest_education: formData.get('highest_education'),
+                submitted_before: formData.get('submitted_before') === 'true',
+                feedback: formData.get('feedback'),
+                results: results
+            };
+            
+            try {
+                const response = await fetch('/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    messageDiv.className = 'message success';
+                    messageDiv.innerHTML = `
+                        ${result.message}<br>
+                        <strong>Your submission code: ${result.code}</strong><br>
+                        <small>Please save this code for your records.</small>
+                    `;
+                    this.reset();
+                    
+                    // Reset to single rating
+                    const container = document.getElementById('emotionRatings');
+                    const items = container.querySelectorAll('.emotion-rating-item');
+                    items.forEach((item, index) => {
+                        if (index > 0) item.remove();
+                    });
+                    ratingCount = 1;
+                } else {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = 'Error: ' + result.message;
+                }
+            } catch (error) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'An error occurred. Please try again.';
+            }
+        });
+    </script>
+</body>
+</html>

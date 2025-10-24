@@ -1,0 +1,115 @@
+from flask import Flask, render_template, request, jsonify
+from dotenv import load_dotenv
+import os
+import psycopg2
+import secrets
+import string
+
+app = Flask(__name__)
+
+def get_db_config():
+    """Get database configuration from environment variables or use defaults"""
+    load_dotenv()
+    return {
+        'dbname': os.getenv('DB_NAME', 'sound_test_db'),
+        'user': os.getenv('DB_USER', 'postgres'),
+        'password': os.getenv('DB_PASSWORD', 'postgres'),
+        'host': os.getenv('DB_HOST', 'localhost'),
+        'port': os.getenv('DB_PORT', '5432')
+    }
+
+def get_db_connection():
+    """Create a connection to PostgreSQL database"""
+    config = get_db_config()
+    conn = psycopg2.connect(**config)
+    return conn
+
+def generate_unique_code(length=10):
+    """Generate a unique alphanumeric code"""
+    characters = string.ascii_uppercase + string.digits
+    return ''.join(secrets.choice(characters) for _ in range(length))
+
+@app.route('/')
+def index():
+    return render_template('sound_test.html')
+
+@app.route('/submit', methods=['POST'])
+def submit_questionnaire():
+    conn = None
+    cursor = None
+    
+    try:
+        data = request.get_json()
+        
+        # Generate unique code
+        code = generate_unique_code()
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Insert into submissions table
+        cursor.execute('''
+            INSERT INTO submissions 
+            (code, age, gender, highest_education, submitted_before, feedback)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        ''', (
+            code,
+            int(data.get('age')),
+            data.get('gender'),
+            data.get('highest_education'),
+            data.get('submitted_before', False),
+            data.get('feedback')
+        ))
+        
+        # Insert multiple rows into results table
+        results = data.get('results', [])
+        for result in results:
+            cursor.execute('''
+                INSERT INTO results 
+                (code, emotion1, rating1, emotion2, rating2)
+                VALUES (%s, %s, %s, %s, %s)
+            ''', (
+                code,
+                result.get('emotion1'),
+                int(result.get('rating1')),
+                result.get('emotion2') if result.get('emotion2') else None,
+                int(result.get('rating2')) if result.get('rating2') else None
+            ))
+        
+        conn.commit()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Thank you for your submission! This is the code of your submission: ' + code,
+            'code': code
+        })
+    
+    except psycopg2.Error as e:
+        if conn:
+            conn.rollback()
+        return jsonify({'success': False, 'message': f'Database error: {str(e)}'}), 400
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 400
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+@app.route('/health')
+def health_check():
+    """Health check endpoint for monitoring"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT 1')
+        cursor.close()
+        conn.close()
+        return jsonify({'status': 'healthy', 'database': 'connected'})
+    except Exception as e:
+        return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)

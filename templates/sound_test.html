@@ -13,17 +13,18 @@
             <h1>Emotion Rating Questionnaire</h1>
             <p class="subtitle">Please complete the following questionnaire</p>
             
-            <form id="questionnaireForm">
+            <form id="questionnaireForm" novalidate>
                 <!-- Demographics Section -->
                 <div class="section">
                     <h2>Demographics</h2>
                     
-                    <div class="form-group">
+                    <div class="form-group" id="age-group">
                         <label for="age">Age *</label>
                         <input type="number" id="age" name="age" min="1" max="120" required>
+                        <div class="error-message">Please enter your age.</div>
                     </div>
                     
-                    <div class="form-group">
+                    <div class="form-group" id="gender-group">
                         <label for="gender">Gender *</label>
                         <select id="gender" name="gender" required>
                             <option value="">-- Select --</option>
@@ -32,9 +33,10 @@
                             <option value="Non-binary">Non-binary</option>
                             <option value="Other">Other</option>
                         </select>
+                        <div class="error-message">Please select your gender.</div>
                     </div>
                     
-                    <div class="form-group">
+                    <div class="form-group" id="education-group">
                         <label for="highest_education">Highest Education *</label>
                         <select id="highest_education" name="highest_education" required>
                             <option value="">-- Select --</option>
@@ -45,9 +47,10 @@
                             <option value="Master's degree">Master's degree</option>
                             <option value="Doctoral degree">Doctoral degree</option>
                         </select>
+                        <div class="error-message">Please select your highest education level.</div>
                     </div>
                     
-                    <div class="form-group">
+                    <div class="form-group" id="submitted-before-group">
                         <label>Have you completed this questionnaire before? *</label>
                         <div class="radio-group">
                             <label>
@@ -59,6 +62,7 @@
                                 No
                             </label>
                         </div>
+                        <div class="error-message">Please select an option.</div>
                     </div>
                 </div>
                 
@@ -110,8 +114,67 @@
         let soundFiles = [];
         let ratingCount = 0;
         
+        // Function to clear all invalid states
+        function clearInvalidStates() {
+            document.querySelectorAll('.form-group.invalid').forEach(group => {
+                group.classList.remove('invalid');
+            });
+            document.querySelectorAll('.radio-group.invalid').forEach(group => {
+                group.classList.remove('invalid');
+            });
+        }
+        
+        // Function to highlight invalid field
+        function highlightInvalidField(fieldId, isRadioGroup = false) {
+            const group = document.getElementById(fieldId);
+            if (group) {
+                if (isRadioGroup) {
+                    const radioGroup = group.querySelector('.radio-group');
+                    if (radioGroup) {
+                        radioGroup.classList.add('invalid');
+                    }
+                } else {
+                    group.classList.add('invalid');
+                }
+            }
+        }
+        
+        // Add input listeners to remove invalid state when user starts filling
+        function addClearInvalidListeners() {
+            // For text and number inputs
+            document.querySelectorAll('input[type="text"], input[type="number"], select, textarea').forEach(element => {
+                element.addEventListener('input', function() {
+                    const formGroup = this.closest('.form-group');
+                    if (formGroup) {
+                        formGroup.classList.remove('invalid');
+                    }
+                });
+                
+                element.addEventListener('change', function() {
+                    const formGroup = this.closest('.form-group');
+                    if (formGroup) {
+                        formGroup.classList.remove('invalid');
+                    }
+                });
+            });
+            
+            // For radio buttons
+            document.querySelectorAll('input[type="radio"]').forEach(element => {
+                element.addEventListener('change', function() {
+                    const radioGroup = this.closest('.radio-group');
+                    if (radioGroup) {
+                        radioGroup.classList.remove('invalid');
+                    }
+                });
+            });
+        }
+        
+        // Initialize listeners on page load
+        addClearInvalidListeners();
+        
         async function loadSounds() {
             const numSounds = document.getElementById('numSounds').value;
+            const messageDiv = document.getElementById('message');
             
             try {
                 // Fetch sound files from backend
@@ -181,7 +244,7 @@
                     </audio>
                 </div>
                 
-                <div class="form-group">
+                <div class="form-group" id="emotion1-group-${index}">
                     <label for="emotion1_${index}">Primary Emotion *</label>
                     <select id="emotion1_${index}" name="emotion1_${index}" class="emotion-select" data-index="${index}" data-type="primary" required>
                         <option value="">-- Select --</option>
@@ -192,14 +255,16 @@
                         <option value="Surprise">Surprise</option>
                         <option value="Disgust">Disgust</option>
                     </select>
+                    <div class="error-message">Please select a primary emotion.</div>
                 </div>
                 
-                <div class="form-group">
+                <div class="form-group" id="rating1-group-${index}">
                     <label for="rating1_${index}">Primary Rating (1-5) *</label>
                     <input type="number" id="rating1_${index}" name="rating1_${index}" class="rating-input" data-index="${index}" data-type="primary" min="1" max="5" step="1" required>
+                    <div class="error-message">Please provide a rating between 1 and 5.</div>
                 </div>
                 
-                <div class="form-group">
+                <div class="form-group" id="emotion2-group-${index}">
                     <label for="emotion2_${index}">Secondary Emotion (Optional)</label>
                     <select id="emotion2_${index}" name="emotion2_${index}" class="emotion-select" data-index="${index}" data-type="secondary">
                         <option value="">-- Select --</option>
@@ -210,11 +275,13 @@
                         <option value="Surprise">Surprise</option>
                         <option value="Disgust">Disgust</option>
                     </select>
+                    <div class="error-message">Please select a secondary emotion if you provided a rating.</div>
                 </div>
                 
-                <div class="form-group">
+                <div class="form-group" id="rating2-group-${index}">
                     <label for="rating2_${index}">Secondary Rating (1-5)</label>
                     <input type="number" id="rating2_${index}" name="rating2_${index}" class="rating-input" data-index="${index}" data-type="secondary" min="1" max="5" step="1">
+                    <div class="error-message">Please provide a rating between 1 and 5.</div>
                 </div>
             `;
             
@@ -227,12 +294,22 @@
             document.querySelectorAll('.emotion-select').forEach(select => {
                 select.addEventListener('change', function() {
                     validateEmotionRating(this);
+                    // Clear invalid state when user makes a selection
+                    const formGroup = this.closest('.form-group');
+                    if (formGroup) {
+                        formGroup.classList.remove('invalid');
+                    }
                 });
             });
             
             document.querySelectorAll('.rating-input').forEach(input => {
                 input.addEventListener('input', function() {
                     validateEmotionRating(this);
+                    // Clear invalid state when user enters a value
+                    const formGroup = this.closest('.form-group');
+                    if (formGroup) {
+                        formGroup.classList.remove('invalid');
+                    }
                 });
             });
         }
@@ -266,13 +343,39 @@
         document.getElementById('questionnaireForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            // Clear previous invalid states
+            clearInvalidStates();
+            
             const formData = new FormData(this);
             const messageDiv = document.getElementById('message');
+            let hasErrors = false;
+            
+            // Validate demographics section
+            if (!formData.get('age')) {
+                highlightInvalidField('age-group');
+                hasErrors = true;
+            }
+            
+            if (!formData.get('gender')) {
+                highlightInvalidField('gender-group');
+                hasErrors = true;
+            }
+            
+            if (!formData.get('highest_education')) {
+                highlightInvalidField('education-group');
+                hasErrors = true;
+            }
+            
+            if (!formData.get('submitted_before')) {
+                highlightInvalidField('submitted-before-group', true);
+                hasErrors = true;
+            }
             
             // Collect all emotion ratings with validation
             const results = [];
             const ratingItems = document.querySelectorAll('.emotion-rating-item');
             let validationError = false;
+            let errorMessage = '';
             
             ratingItems.forEach(item => {
                 const index = item.dataset.index;
@@ -281,27 +384,53 @@
                 const emotion2 = formData.get(`emotion2_${index}`);
                 const rating2 = formData.get(`rating2_${index}`);
                 
-                // Validate primary emotion and rating
-                if (emotion1 && !rating1) {
+                // Validate primary emotion
+                if (!emotion1) {
+                    highlightInvalidField(`emotion1-group-${index}`);
                     validationError = true;
-                    messageDiv.className = 'message error';
-                    messageDiv.textContent = `Error: Please provide a rating for the primary emotion in Sound #${parseInt(index) + 1}`;
-                    return;
+                    hasErrors = true;
+                    if (!errorMessage) {
+                        errorMessage = `Please select a primary emotion for Sound #${parseInt(index) + 1}`;
+                    }
+                }
+                
+                // Validate primary rating
+                if (!rating1 || rating1 < 1 || rating1 > 5) {
+                    highlightInvalidField(`rating1-group-${index}`);
+                    validationError = true;
+                    hasErrors = true;
+                    if (!errorMessage) {
+                        errorMessage = `Please provide a valid rating (1-5) for the primary emotion in Sound #${parseInt(index) + 1}`;
+                    }
+                }
+                
+                // Validate primary emotion and rating combination
+                if (emotion1 && !rating1) {
+                    highlightInvalidField(`rating1-group-${index}`);
+                    validationError = true;
+                    hasErrors = true;
+                    if (!errorMessage) {
+                        errorMessage = `Please provide a rating for the primary emotion in Sound #${parseInt(index) + 1}`;
+                    }
                 }
                 
                 // Validate secondary emotion and rating
                 if (emotion2 && !rating2) {
+                    highlightInvalidField(`rating2-group-${index}`);
                     validationError = true;
-                    messageDiv.className = 'message error';
-                    messageDiv.textContent = `Error: Please provide a rating for the secondary emotion in Sound #${parseInt(index) + 1}`;
-                    return;
+                    hasErrors = true;
+                    if (!errorMessage) {
+                        errorMessage = `Please provide a rating for the secondary emotion in Sound #${parseInt(index) + 1}`;
+                    }
                 }
                 
                 if (rating2 && !emotion2) {
+                    highlightInvalidField(`emotion2-group-${index}`);
                     validationError = true;
-                    messageDiv.className = 'message error';
-                    messageDiv.textContent = `Error: Please select a secondary emotion for Sound #${parseInt(index) + 1}`;
-                    return;
+                    hasErrors = true;
+                    if (!errorMessage) {
+                        errorMessage = `Please select a secondary emotion for Sound #${parseInt(index) + 1}`;
+                    }
                 }
                 
                 if (emotion1 && rating1) {
@@ -320,7 +449,14 @@
             });
             
             // Stop if validation failed
-            if (validationError) {
+            if (hasErrors) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = errorMessage || 'Please fill in all required fields.';
+                // Scroll to first invalid field
+                const firstInvalid = document.querySelector('.form-group.invalid, .radio-group.invalid');
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
                 return;
             }
             
@@ -350,7 +486,7 @@
                     messageDiv.innerHTML = `
                         ${result.message}<br>
                         <strong>Your submission code: ${result.code}</strong><br>
-                        <small>Please save this code for your records.</small>
+                        <small>Please save this code for your records. This allows you to ask for your information to be deleted by the administrators of this website.</small>
                     `;
                     this.reset();
                     
@@ -362,6 +498,9 @@
                     document.getElementById('emotionRatings').innerHTML = '';
                     soundFiles = [];
                     ratingCount = 0;
+                    
+                    // Scroll to success message
+                    messageDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 } else {
                     messageDiv.className = 'message error';
                     messageDiv.textContent = 'Error: ' + result.message;

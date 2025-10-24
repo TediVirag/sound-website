@@ -71,8 +71,10 @@ def get_sounds():
         limit = int(count)
         sound_files = sound_files[:limit]
     except ValueError:
-        # If count is not convertible to int, skip limiting
-        pass
+        return jsonify({
+        'success': False,
+        'message': 'Count is not convertible to int.'
+    })
     
     # Generate full URLs for each sound file
     sound_urls = [url_for('static', filename=f'{get_sound_folder_config()}/{filename}') for filename in sound_files]

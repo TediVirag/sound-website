@@ -55,6 +55,17 @@ def init_db():
         ''')
         
         print("Created 'submissions' table.")
+
+        # Create the sound_samples table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sound_samples (
+                sound_code VARCHAR(50) NOT NULL,
+                result_num NUMERIC NOT NULL DEFAULT 0,
+                PRIMARY KEY (sound_code)
+            )
+        ''')
+        
+        print("Created 'sound_samples' table.")
         
         # Create the results table
         cursor.execute('''
@@ -72,16 +83,6 @@ def init_db():
         ''')
 
         print("Created 'results' table.")
-
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS sound_samples (
-                sound_code VARCHAR(50) NOT NULL,
-                result_num NUMERIC NOT NULL DEFAULT 0,
-                PRIMARY KEY (sound_code)
-            )
-        ''')
-        
-        print("Created 'sound_samples' table.")
         
         # Create indexes for better query performance
         cursor.execute('''

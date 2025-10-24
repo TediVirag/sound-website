@@ -50,7 +50,7 @@ def init_db():
         # Create the submissions table
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS submissions (
-                code VARCHAR(50) PRIMARY KEY,
+                user_code VARCHAR(50) PRIMARY KEY,
                 age INTEGER NOT NULL CHECK (age > 0 AND age <= 120),
                 gender VARCHAR(50) NOT NULL,
                 highest_education VARCHAR(100) NOT NULL,
@@ -66,12 +66,13 @@ def init_db():
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS results (
                 id SERIAL PRIMARY KEY,
-                code VARCHAR(50) NOT NULL,
+                user_code VARCHAR(50) NOT NULL,
+                sound_code VARCHAR(50) NOT NULL,
                 emotion1 VARCHAR(50) NOT NULL,
                 rating1 NUMERIC(5,2) NOT NULL,
                 emotion2 VARCHAR(50),
                 rating2 NUMERIC(5,2),
-                FOREIGN KEY (code) REFERENCES submissions(code) ON DELETE CASCADE
+                FOREIGN KEY (user_code) REFERENCES submissions(user_code) ON DELETE CASCADE
             )
         ''')
         
@@ -85,7 +86,7 @@ def init_db():
         
         cursor.execute('''
             CREATE INDEX IF NOT EXISTS idx_results_code 
-            ON results(code)
+            ON results(sound_code)
         ''')
         
         

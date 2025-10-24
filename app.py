@@ -41,8 +41,8 @@ def submit_questionnaire():
     try:
         data = request.get_json()
         
-        # Generate unique code
-        code = generate_unique_code()
+        # Generate unique user_code
+        user_code = generate_unique_code()
         
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -50,10 +50,10 @@ def submit_questionnaire():
         # Insert into submissions table
         cursor.execute('''
             INSERT INTO submissions 
-            (code, age, gender, highest_education, submitted_before, feedback)
+            (user_code, age, gender, highest_education, submitted_before, feedback)
             VALUES (%s, %s, %s, %s, %s, %s)
         ''', (
-            code,
+            user_code,
             int(data.get('age')),
             data.get('gender'),
             data.get('highest_education'),
@@ -66,10 +66,11 @@ def submit_questionnaire():
         for result in results:
             cursor.execute('''
                 INSERT INTO results 
-                (code, emotion1, rating1, emotion2, rating2)
-                VALUES (%s, %s, %s, %s, %s)
+                (user_code, sound_code, emotion1, rating1, emotion2, rating2)
+                VALUES (%s, %s, %s, %s, %s, %s)
             ''', (
-                code,
+                user_code,
+                result.get('sound_code'),
                 result.get('emotion1'),
                 int(result.get('rating1')),
                 result.get('emotion2') if result.get('emotion2') else None,
@@ -80,8 +81,8 @@ def submit_questionnaire():
         
         return jsonify({
             'success': True, 
-            'message': 'Thank you for your submission! This is the code of your submission: ' + code,
-            'code': code
+            'message': 'Thank you for your submission!',
+            'code': user_code
         })
     
     except psycopg2.Error as e:

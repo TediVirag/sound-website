@@ -73,7 +73,7 @@
                             
                             <div class="form-group">
                                 <label for="emotion1_0">Primary Emotion *</label>
-                                <select id="emotion1_0" name="emotion1_0" required>
+                                <select id="emotion1_0" name="emotion1_0" class="emotion-select" data-index="0" data-type="primary" required>
                                     <option value="">-- Select --</option>
                                     <option value="Happiness">Happiness</option>
                                     <option value="Sadness">Sadness</option>
@@ -86,12 +86,12 @@
                             
                             <div class="form-group">
                                 <label for="rating1_0">Primary Rating (1-5) *</label>
-                                <input type="number" id="rating1_0" name="rating1_0" min="1" max="5" step="1" required>
+                                <input type="number" id="rating1_0" name="rating1_0" class="rating-input" data-index="0" data-type="primary" min="1" max="5" step="1" required>
                             </div>
                             
                             <div class="form-group">
                                 <label for="emotion2_0">Secondary Emotion (Optional)</label>
-                                <select id="emotion2_0" name="emotion2_0">
+                                <select id="emotion2_0" name="emotion2_0" class="emotion-select" data-index="0" data-type="secondary">
                                     <option value="">-- Select --</option>
                                     <option value="Happiness">Happiness</option>
                                     <option value="Sadness">Sadness</option>
@@ -104,7 +104,7 @@
                             
                             <div class="form-group">
                                 <label for="rating2_0">Secondary Rating (1-5)</label>
-                                <input type="number" id="rating2_0" name="rating2_0" min="1" max="5" step="1">
+                                <input type="number" id="rating2_0" name="rating2_0" class="rating-input" data-index="0" data-type="secondary" min="1" max="5" step="1">
                             </div>
                         </div>
                     </div>
@@ -132,6 +132,52 @@
     <script>
         let ratingCount = 1;
         
+        // Add validation listeners to existing fields
+        document.addEventListener('DOMContentLoaded', function() {
+            setupValidationListeners();
+        });
+        
+        function setupValidationListeners() {
+            // For all emotion selects and rating inputs
+            document.querySelectorAll('.emotion-select').forEach(select => {
+                select.addEventListener('change', function() {
+                    validateEmotionRating(this);
+                });
+            });
+            
+            document.querySelectorAll('.rating-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    validateEmotionRating(this);
+                });
+            });
+        }
+        
+        function validateEmotionRating(element) {
+            const index = element.dataset.index;
+            const type = element.dataset.type;
+            
+            const emotionSelect = document.getElementById(`emotion${type === 'primary' ? '1' : '2'}_${index}`);
+            const ratingInput = document.getElementById(`rating${type === 'primary' ? '1' : '2'}_${index}`);
+            
+            // If emotion is selected, make rating required
+            if (emotionSelect.value) {
+                ratingInput.required = true;
+            } else {
+                // If it's secondary, make it optional
+                if (type === 'secondary') {
+                    ratingInput.required = false;
+                    ratingInput.value = ''; // Clear the value
+                }
+            }
+            
+            // If rating is entered, make emotion required (for secondary only)
+            if (type === 'secondary' && ratingInput.value) {
+                emotionSelect.required = true;
+            } else if (type === 'secondary' && !ratingInput.value) {
+                emotionSelect.required = false;
+            }
+        }
+        
         function addEmotionRating() {
             const container = document.getElementById('emotionRatings');
             const newRating = document.createElement('div');
@@ -143,7 +189,7 @@
                 
                 <div class="form-group">
                     <label for="emotion1_${ratingCount}">Primary Emotion *</label>
-                    <select id="emotion1_${ratingCount}" name="emotion1_${ratingCount}" required>
+                    <select id="emotion1_${ratingCount}" name="emotion1_${ratingCount}" class="emotion-select" data-index="${ratingCount}" data-type="primary" required>
                         <option value="">-- Select --</option>
                         <option value="Happiness">Happiness</option>
                         <option value="Sadness">Sadness</option>
@@ -156,12 +202,12 @@
                 
                 <div class="form-group">
                     <label for="rating1_${ratingCount}">Primary Rating (1-5) *</label>
-                    <input type="number" id="rating1_${ratingCount}" name="rating1_${ratingCount}" min="1" max="5" step="1" required>
+                    <input type="number" id="rating1_${ratingCount}" name="rating1_${ratingCount}" class="rating-input" data-index="${ratingCount}" data-type="primary" min="1" max="5" step="1" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="emotion2_${ratingCount}">Secondary Emotion (Optional)</label>
-                    <select id="emotion2_${ratingCount}" name="emotion2_${ratingCount}">
+                    <select id="emotion2_${ratingCount}" name="emotion2_${ratingCount}" class="emotion-select" data-index="${ratingCount}" data-type="secondary">
                         <option value="">-- Select --</option>
                         <option value="Happiness">Happiness</option>
                         <option value="Sadness">Sadness</option>
@@ -174,7 +220,7 @@
                 
                 <div class="form-group">
                     <label for="rating2_${ratingCount}">Secondary Rating (1-5)</label>
-                    <input type="number" id="rating2_${ratingCount}" name="rating2_${ratingCount}" min="1" max="5" step="1">
+                    <input type="number" id="rating2_${ratingCount}" name="rating2_${ratingCount}" class="rating-input" data-index="${ratingCount}" data-type="secondary" min="1" max="5" step="1">
                 </div>
                 
                 <button type="button" class="remove-rating-btn" onclick="removeEmotionRating(${ratingCount})">Remove This Rating</button>
@@ -182,6 +228,9 @@
             
             container.appendChild(newRating);
             ratingCount++;
+            
+            // Setup validation for the newly added fields
+            setupValidationListeners();
         }
         
         function removeEmotionRating(index) {
@@ -197,9 +246,10 @@
             const formData = new FormData(this);
             const messageDiv = document.getElementById('message');
             
-            // Collect all emotion ratings
+            // Collect all emotion ratings with validation
             const results = [];
             const ratingItems = document.querySelectorAll('.emotion-rating-item');
+            let validationError = false;
             
             ratingItems.forEach(item => {
                 const index = item.dataset.index;
@@ -207,6 +257,29 @@
                 const rating1 = formData.get(`rating1_${index}`);
                 const emotion2 = formData.get(`emotion2_${index}`);
                 const rating2 = formData.get(`rating2_${index}`);
+                
+                // Validate primary emotion and rating
+                if (emotion1 && !rating1) {
+                    validationError = true;
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = `Error: Please provide a rating for the primary emotion in Rating #${parseInt(index) + 1}`;
+                    return;
+                }
+                
+                // Validate secondary emotion and rating
+                if (emotion2 && !rating2) {
+                    validationError = true;
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = `Error: Please provide a rating for the secondary emotion in Rating #${parseInt(index) + 1}`;
+                    return;
+                }
+                
+                if (rating2 && !emotion2) {
+                    validationError = true;
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = `Error: Please select a secondary emotion for Rating #${parseInt(index) + 1}`;
+                    return;
+                }
                 
                 if (emotion1 && rating1) {
                     results.push({
@@ -217,6 +290,11 @@
                     });
                 }
             });
+            
+            // Stop if validation failed
+            if (validationError) {
+                return;
+            }
             
             // Prepare submission data
             const data = {
@@ -244,7 +322,7 @@
                     messageDiv.innerHTML = `
                         ${result.message}<br>
                         <strong>Your submission code: ${result.code}</strong><br>
-                        <small>Please save this code for your records.</small>
+                        <small>Please save this code for your records. This will allow you to ask for your data to be removed.</small>
                     `;
                     this.reset();
                     

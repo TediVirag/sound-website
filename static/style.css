@@ -37,7 +37,7 @@ h2 {
     font-size: 20px;
     margin-bottom: 20px;
     padding-bottom: 10px;
-    border-bottom: 2px solid #f8b1ac;
+    border-bottom: 2px solid #adb4bd;;
 }
 
 h3 {
@@ -134,7 +134,7 @@ textarea {
     padding: 20px;
     border-radius: 8px;
     margin-bottom: 20px;
-    border: 2px solid #f8b1ac;
+    border: 2px solid #adb4bd;;
 }
 
 .add-rating-btn,

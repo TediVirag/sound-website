@@ -6,7 +6,7 @@ A simple web application with a questionnaire form that stores responses in a Po
 # 1. Install PostgreSQL (see INSTALL.md for your OS)
 
 # 2. Create project directory
-mkdir questionnaire-app && cd questionnaire-app
+mkdir sound_test-app && cd sound_test-app
 
 # 3. Create virtual environment
 python -m venv venv

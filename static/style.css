@@ -23,6 +23,7 @@ body {
     padding: 40px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     margin-bottom: 30px;
+    display: none;
 }
 
 h1 {
@@ -354,4 +355,96 @@ input, select, textarea {
         flex-direction: column;
         gap: 10px;
     }
+}
+
+/* Privacy Policy Section */
+.privacy-policy {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    width: 90%;
+    margin: 20px auto;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    color: #333;
+    font-size: 1rem;
+    line-height: 1.8;
+}
+
+/* Headings */
+.privacy-policy h2 {
+    margin-top: 0;
+    font-size: 1.8rem;
+    color: #333;
+    border-bottom: 2px solid #007BFF;
+    padding-bottom: 10px;
+}
+
+/* Paragraphs */
+.privacy-policy p {
+    margin: 15px 0;
+}
+
+/* Unordered List */
+.privacy-policy ul {
+    padding-left: 20px;
+}
+
+.privacy-policy ul li {
+    display: flex; /* Use flexbox for alignment */
+    align-items: flex-start; /* Align items to the top of the list item */
+    margin-bottom: 10px; /* Add spacing between list items */
+    gap: 10px;
+}
+
+/* Checkbox Styling */
+.privacy-checkbox {
+    flex-shrink: 0;
+    width: 18px; 
+    height: 18px; 
+    accent-color: #f8b1ac; 
+    vertical-align: middle; 
+    cursor: pointer; 
+    margin-right: 18px; 
+}
+
+/* Checkbox Label Styling */
+.privacy-policy ul li label {
+    display: flex;
+    align-items: center;
+    font-size: 1rem; 
+    line-height: 1.5; 
+    cursor: pointer;
+}
+
+.privacy-policy ul li label span {
+    display: block; /* Prevent text from overlapping */
+    line-height: 1.5; /* Match the line height of the label */
+}
+
+/* Button Styling */
+button#agreeButton {
+    display: block;
+    margin: 20px 0 0 auto;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #f8b1ac 0%, #6e4cc5 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-size: 1rem;
+}
+
+button#agreeButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(110, 76, 197, 0.4);
+}
+
+button#agreeButton:disabled {
+    background: linear-gradient(135deg, #b9aead 0%, #514e5a 100%);
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
 }

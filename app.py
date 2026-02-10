@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify, url_for
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from sshtunnel import SSHTunnelForwarder
 import os
 from datetime import datetime
 from dotenv import load_dotenv
@@ -8,6 +9,9 @@ import secrets
 import string
 
 app = Flask(__name__)
+
+# Global variable to hold SSH tunnel
+ssh_tunnel = None
 
 def get_db_config():
     """Get database configuration from environment variables or use defaults"""
@@ -20,14 +24,53 @@ def get_db_config():
         'port': os.getenv('DB_PORT', '5432')
     }
 
+def get_ssh_config():
+    """Get SSH tunnel configuration from environment variables"""
+    load_dotenv()
+    return {
+        'use_ssh': os.getenv('USE_SSH_TUNNEL', 'false').lower() == 'true',
+        'ssh_host': os.getenv('SSH_HOST'),
+        'ssh_port': int(os.getenv('SSH_PORT', '22')),
+        'ssh_user': os.getenv('SSH_USER'),
+        'ssh_password': os.getenv('SSH_PASSWORD'),
+        'remote_bind_host': os.getenv('REMOTE_BIND_HOST', 'localhost'),
+        'remote_bind_port': int(os.getenv('REMOTE_BIND_PORT', '5432'))
+    }
+
 def get_sound_folder_config():
     """Get sound folder configuration from environment variables or use defaults"""
     load_dotenv()
     return os.getenv('SOUND_FOLDER', 'sound_files')
 
+def setup_ssh_tunnel():
+    """Setup SSH tunnel if configured"""
+    global ssh_tunnel
+    ssh_config = get_ssh_config()
+    
+    if not ssh_config['use_ssh']:
+        return None
+    
+    ssh_tunnel = SSHTunnelForwarder(
+        (ssh_config['ssh_host'], ssh_config['ssh_port']),
+        ssh_username=ssh_config['ssh_user'],
+        ssh_password=ssh_config['ssh_password'],
+        remote_bind_address=(ssh_config['remote_bind_host'], ssh_config['remote_bind_port']),
+        allow_agent=False,
+        host_pkey_directories=None
+    )
+    
+    ssh_tunnel.start()
+    return ssh_tunnel
+
 def get_db_connection():
-    """Create a connection to PostgreSQL database"""
+    """Create a connection to PostgreSQL database (through SSH tunnel if configured)"""
     config = get_db_config()
+    
+    # If SSH tunnel is active, use the local port
+    if ssh_tunnel and ssh_tunnel.is_active:
+        config['host'] = '127.0.0.1'
+        config['port'] = str(ssh_tunnel.local_bind_port)
+    
     conn = psycopg2.connect(**config)
     return conn
 
@@ -64,51 +107,61 @@ def get_sounds():
         })
     
     # Get sound samples' submission counts from database
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    sound_codes = [os.path.splitext(os.path.basename(path))[0] for path in sound_files]
-
-    # Prepare query to preserve order by result_num
-    format_strings = ','.join(['%s'] * len(sound_codes))
-    query = f"""
-        SELECT sound_code, result_num
-        FROM sound_samples
-        WHERE sound_code IN ({format_strings})
-        ORDER BY result_num ASC
-    """
-    cursor.execute(query, tuple(sound_codes))
-    rows = cursor.fetchall()
-
-    # Create a mapping from sound_code to full file path for lookup
-    code_to_path = {os.path.splitext(os.path.basename(path))[0]: path for path in sound_files}
-
-    # Now, produce the sorted list of file paths according to result_num order
-    ordered_sound_files = [code_to_path[row[0]] for row in rows]
+    conn = None
+    cursor = None
     
-    # Limit to requested count
     try:
-        limit = int(count)
-        ordered_sound_files = ordered_sound_files[:limit]
-    except ValueError:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        sound_codes = [os.path.splitext(os.path.basename(path))[0] for path in sound_files]
+
+        # Prepare query to preserve order by result_num
+        format_strings = ','.join(['%s'] * len(sound_codes))
+        query = f"""
+            SELECT sound_code, result_num
+            FROM sound_samples
+            WHERE sound_code IN ({format_strings})
+            ORDER BY result_num ASC
+        """
+        cursor.execute(query, tuple(sound_codes))
+        rows = cursor.fetchall()
+
+        # Create a mapping from sound_code to full file path for lookup
+        code_to_path = {os.path.splitext(os.path.basename(path))[0]: path for path in sound_files}
+
+        # Now, produce the sorted list of file paths according to result_num order
+        ordered_sound_files = [code_to_path[row[0]] for row in rows]
+        
+        # Limit to requested count
+        try:
+            limit = int(count)
+            ordered_sound_files = ordered_sound_files[:limit]
+        except ValueError:
+            return jsonify({
+                'success': False,
+                'message': 'Count is not convertible to int.'
+            })
+        
+        # Generate full URLs for each sound file
+        sound_urls = [url_for('static', filename=f'{get_sound_folder_config()}/{filename}') for filename in ordered_sound_files]
+        
+        return jsonify({
+            'success': True,
+            'sounds': sound_urls,
+            'count': len(sound_urls)
+        })
+    
+    except Exception as e:
         return jsonify({
             'success': False,
-            'message': 'Count is not convertible to int.'
-        })
+            'message': f'Error retrieving sounds: {str(e)}'
+        }), 500
     finally:
         if cursor:
             cursor.close()
         if conn:
             conn.close()
-    
-    # Generate full URLs for each sound file
-    sound_urls = [url_for('static', filename=f'{get_sound_folder_config()}/{filename}') for filename in ordered_sound_files]
-    
-    return jsonify({
-        'success': True,
-        'sounds': sound_urls,
-        'count': len(sound_urls)
-    })
 
 @app.route('/submit', methods=['POST'])
 def submit_questionnaire():
@@ -157,7 +210,7 @@ def submit_questionnaire():
             cursor.execute('''
                 UPDATE sound_samples 
                 SET result_num = result_num + 1
-                WHERE sound_code=  %s;
+                WHERE sound_code = %s;
             ''', (result.get('sound_code'),))
         
         conn.commit()
@@ -196,4 +249,11 @@ def health_check():
         return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    setup_ssh_tunnel()
+    
+    try:
+        app.run(debug=True, host='0.0.0.0', port=5000)
+    finally:
+        # Close SSH tunnel when app shuts down
+        if ssh_tunnel:
+            ssh_tunnel.stop()

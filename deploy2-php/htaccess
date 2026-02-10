@@ -1,0 +1,22 @@
+# Enable HTTPS
+RewriteEngine On
+RewriteCond %{SERVER_PORT} =80
+RewriteRule ^(.*) https://%{SERVER_NAME}/$1 [R,L]
+
+# Clean URLs (optional)
+RewriteRule ^get-sounds$ /api/get-sounds.php [L]
+RewriteRule ^submit$ /api/submit.php [L]
+RewriteRule ^health$ /api/health.php [L]
+
+# Prevent directory listing
+Options -Indexes
+
+# Cache static files
+<FilesMatch "\.(jpg|jpeg|png|gif|ico|css|js|wav)$">
+    Header set Cache-Control "max-age=2592000, public"
+</FilesMatch>
+
+# PHP settings
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value memory_limit 128M

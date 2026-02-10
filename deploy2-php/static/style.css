@@ -1,0 +1,450 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f8b1ac 0%, #6e4cc5 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.questionnaire-box {
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    margin-bottom: 30px;
+    display: none;
+}
+
+h1 {
+    color: #333;
+    font-size: 28px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+h2 {
+    color: #6e4cc5;
+    font-size: 20px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #adb4bd;;
+}
+
+h3 {
+    color: #555;
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+
+.subtitle {
+    color: #666;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+
+.info-text {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.section {
+    margin-bottom: 35px;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 10px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+/* Audio player styling */
+.audio-player {
+    margin: 20px 0;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(248, 177, 172, 0.1) 0%, rgba(110, 76, 197, 0.1) 100%);
+    border-radius: 10px;
+    border: 2px solid #f8b1ac;
+}
+
+.audio-player audio {
+    width: 100%;
+    outline: none;
+}
+
+/* Custom audio player styling (for browsers that support it) */
+.audio-player audio::-webkit-media-controls-panel {
+    background-color: white;
+}
+
+.audio-player audio::-webkit-media-controls-play-button,
+.audio-player audio::-webkit-media-controls-pause-button {
+    background-color: #6e4cc5;
+    border-radius: 50%;
+}
+
+.audio-player audio::-webkit-media-controls-current-time-display,
+.audio-player audio::-webkit-media-controls-time-remaining-display {
+    color: #333;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="number"],
+select,
+textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+    font-family: inherit;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: #6e4cc5;
+}
+
+select {
+    cursor: pointer;
+    background-color: white;
+}
+
+.radio-group {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.radio-group input[type="radio"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.emotion-rating-item {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 2px solid #adb4bd;;
+}
+
+.add-rating-btn,
+.remove-rating-btn {
+    padding: 10px 20px;
+    border: 2px solid #6e4cc5;
+    background: white;
+    color: #6e4cc5;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.add-rating-btn:hover,
+.remove-rating-btn:hover {
+    background: #6e4cc5;
+    color: white;
+}
+
+.remove-rating-btn {
+    border-color: #f8b1ac;
+    color: #f8b1ac;
+    margin-top: 10px;
+}
+
+.remove-rating-btn:hover {
+    background: #f8b1ac;
+    color: white;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #f8b1ac 0%, #6e4cc5 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 20px;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(110, 76, 197, 0.4);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+.message {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    display: none;
+}
+
+.message.success {
+    background-color: #f5f0ff;
+    color: #6e4cc5;
+    border: 2px solid #6e4cc5;
+    display: block;
+}
+
+.message.error {
+    background-color: #fff5f4;
+    color: #d32f2f;
+    border: 2px solid #f8b1ac;
+    display: block;
+}
+
+.form-group.invalid input,
+.form-group.invalid select,
+.form-group.invalid textarea {
+    border: 2px solid #dc3545;
+    background-color: #fff5f5;
+}
+
+.form-group.invalid label {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.form-group .error-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: none;
+}
+
+.form-group.invalid .error-message {
+    display: block;
+}
+
+.radio-group.invalid {
+    border: 2px solid #dc3545;
+    background-color: #fff5f5;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.radio-group.invalid + .error-message {
+    display: block;
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Smooth transition for invalid state */
+input, select, textarea {
+    transition: border-color 0.3s, background-color 0.3s;
+}
+
+.modal-backdrop {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+}
+.modal-backdrop.active {
+    display: block;
+}
+.modal-success {
+    display: none;
+    position: fixed;
+    z-index: 10001;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border-radius: 8px;
+    padding: 32px 24px;
+    box-shadow: 0 5px 32px rgba(0,0,0,.25);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+}
+.modal-success.active {
+    display: block;
+}
+.modal-success .success-icon {
+    font-size: 48px;
+    color: #4BB543;
+    margin-bottom: 16px;
+}
+.modal-success .modal-message {
+    margin-bottom: 18px;
+    font-size: 1.1em;
+}
+.modal-success .modal-code {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 8px;
+}
+.modal-success button {
+    padding: 10px 28px;
+    background: #4BB543;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    margin-top: 8px;
+}
+.modal-success button:hover {
+    background: #388e2c;
+}
+
+@media (max-width: 600px) {
+    .questionnaire-box {
+        padding: 25px;
+    }
+    
+    h1 {
+        font-size: 24px;
+    }
+    
+    .radio-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+/* Privacy Policy Section */
+.privacy-policy {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    width: 90%;
+    margin: 20px auto;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    color: #333;
+    font-size: 1rem;
+    line-height: 1.8;
+}
+
+/* Headings */
+.privacy-policy h2 {
+    margin-top: 0;
+    font-size: 1.8rem;
+    color: #333;
+    border-bottom: 2px solid #007BFF;
+    padding-bottom: 10px;
+}
+
+/* Paragraphs */
+.privacy-policy p {
+    margin: 15px 0;
+}
+
+/* Unordered List */
+.privacy-policy ul {
+    padding-left: 20px;
+}
+
+.privacy-policy ul li {
+    display: flex; /* Use flexbox for alignment */
+    align-items: flex-start; /* Align items to the top of the list item */
+    margin-bottom: 10px; /* Add spacing between list items */
+    gap: 10px;
+}
+
+/* Checkbox Styling */
+.privacy-checkbox {
+    flex-shrink: 0;
+    width: 18px; 
+    height: 18px; 
+    accent-color: #f8b1ac; 
+    vertical-align: middle; 
+    cursor: pointer; 
+    margin-right: 18px; 
+}
+
+/* Checkbox Label Styling */
+.privacy-policy ul li label {
+    display: flex;
+    align-items: center;
+    font-size: 1rem; 
+    line-height: 1.5; 
+    cursor: pointer;
+}
+
+.privacy-policy ul li label span {
+    display: block; /* Prevent text from overlapping */
+    line-height: 1.5; /* Match the line height of the label */
+}
+
+/* Button Styling */
+button#agreeButton {
+    display: block;
+    margin: 20px 0 0 auto;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #f8b1ac 0%, #6e4cc5 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-size: 1rem;
+}
+
+button#agreeButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(110, 76, 197, 0.4);
+}
+
+button#agreeButton:disabled {
+    background: linear-gradient(135deg, #b9aead 0%, #514e5a 100%);
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+}

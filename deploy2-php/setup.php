@@ -1,6 +1,7 @@
 <?php
 /**
  * Database Setup Script - Updated for PostgreSQL 9.4
+ * Needs _file_pairings.txt and input_jsons inside static folder!!!
  */
 
 require_once 'includes/config.php';
@@ -34,18 +35,50 @@ try {
         echo "<p class='warning'>⚠ Submissions table: " . $e->getMessage() . "</p>";
     }
     
-    // Create sound_samples table
+    // Create sound_samples table with new columns
     try {
         $conn->exec("
             CREATE TABLE IF NOT EXISTS sound_samples (
                 sound_code VARCHAR(50) NOT NULL,
                 result_num NUMERIC NOT NULL DEFAULT 0,
+                emotion VARCHAR(50),
+                strength VARCHAR(50),
+                json TEXT,
                 PRIMARY KEY (sound_code)
             )
         ");
         echo "<p class='success'>✓ Created 'sound_samples' table</p>";
     } catch (Exception $e) {
         echo "<p class='warning'>⚠ Sound_samples table: " . $e->getMessage() . "</p>";
+    }
+    
+    // Add new columns if they don't exist (for existing installations)
+    echo "<h2>Updating Table Structure...</h2>";
+    
+    $columnsToAdd = [
+        'emotion' => 'VARCHAR(50)',
+        'strength' => 'VARCHAR(50)',
+        'json' => 'TEXT'
+    ];
+    
+    foreach ($columnsToAdd as $columnName => $columnType) {
+        try {
+            $stmt = $conn->query("
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'sound_samples' 
+                AND column_name = '$columnName'
+            ");
+            
+            if (!$stmt->fetch()) {
+                $conn->exec("ALTER TABLE sound_samples ADD COLUMN $columnName $columnType");
+                echo "<p class='success'>✓ Added column: $columnName</p>";
+            } else {
+                echo "<p class='success'>✓ Column already exists: $columnName</p>";
+            }
+        } catch (Exception $e) {
+            echo "<p class='warning'>⚠ Column $columnName: " . $e->getMessage() . "</p>";
+        }
     }
     
     // Create results table
@@ -103,53 +136,96 @@ try {
         echo "<p class='warning'>⚠ Index idx_results_code: " . $e->getMessage() . "</p>";
     }
     
-    // Populate sound_samples table
+    // Populate sound_samples table from file pairings
     echo "<h2>Populating Sound Samples...</h2>";
     
-    $soundsDir = SOUND_FOLDER_PATH;
+    $pairingsFile = 'static/_file_pairings.txt';
     
-    if (!is_dir($soundsDir)) {
-        echo "<p class='error'>✗ Sounds directory not found: $soundsDir</p>";
+    if (!file_exists($pairingsFile)) {
+        echo "<p class='error'>✗ File pairings file not found: $pairingsFile</p>";
     } else {
-        $soundFiles = glob($soundsDir . '/*.wav');
+        $pairingsContent = file_get_contents($pairingsFile);
+        $lines = explode("\n", $pairingsContent);
         
-        if (empty($soundFiles)) {
-            echo "<p class='warning'>⚠ No .wav files found</p>";
-        } else {
-            sort($soundFiles);
+        $addedCount = 0;
+        $updatedCount = 0;
+        $errorCount = 0;
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) continue;
             
-            $addedCount = 0;
-            $skippedCount = 0;
-            
-            foreach ($soundFiles as $filePath) {
-                $filename = basename($filePath);
-                $soundCode = pathinfo($filename, PATHINFO_FILENAME);
+            // Parse the line: "anger_1_1_8BIS8Z32.wav → 8BIS8Z32.wav"
+            if (preg_match('/^(.+?)\s*→\s*(.+)$/', $line, $matches)) {
+                $fullFilename = trim($matches[1]);
+                $shortFilename = trim($matches[2]);
                 
-                try {
-                    $stmt = $conn->prepare("SELECT COUNT(*) FROM sound_samples WHERE sound_code = ?");
-                    $stmt->execute([$soundCode]);
-                    $exists = $stmt->fetchColumn() > 0;
+                // Extract sound code (without .wav extension)
+                $soundCode = pathinfo($shortFilename, PATHINFO_FILENAME);
+                
+                // Parse the full filename: emotion_strength_counter_code.wav
+                if (preg_match('/^([a-z]+)_(\d+)_(\d+)_([a-zA-Z0-9]+)\.wav$/', $fullFilename, $fileMatches)) {
+                    $emotion = $fileMatches[1];
+                    $strength = $fileMatches[2];
+                    $counter = $fileMatches[3];
                     
-                    if ($exists) {
-                        $skippedCount++;
+                    // Construct JSON file path
+                    $jsonPath = "static/input_jsons/$emotion/{$emotion}_{$strength}_{$counter}.json";
+                    
+                    $jsonContent = null;
+                    if (file_exists($jsonPath)) {
+                        $jsonContent = file_get_contents($jsonPath);
+                        if ($jsonContent === false) {
+                            echo "<p class='warning'>⚠ Could not read JSON file: $jsonPath</p>";
+                            $jsonContent = null;
+                        }
                     } else {
-                        $stmt = $conn->prepare("INSERT INTO sound_samples (sound_code, result_num) VALUES (?, 0)");
-                        $stmt->execute([$soundCode]);
-                        echo "<p class='success'>✓ Added: $soundCode</p>";
-                        $addedCount++;
+                        echo "<p class='warning'>⚠ JSON file not found: $jsonPath</p>";
                     }
-                } catch (Exception $e) {
-                    echo "<p class='error'>✗ Error processing $soundCode: " . $e->getMessage() . "</p>";
+                    
+                    try {
+                        // Check if sound_code exists
+                        $stmt = $conn->prepare("SELECT COUNT(*) FROM sound_samples WHERE sound_code = ?");
+                        $stmt->execute([$soundCode]);
+                        $exists = $stmt->fetchColumn() > 0;
+                        
+                        if ($exists) {
+                            // Update existing record
+                            $stmt = $conn->prepare("
+                                UPDATE sound_samples 
+                                SET emotion = ?, strength = ?, json = ? 
+                                WHERE sound_code = ?
+                            ");
+                            $stmt->execute([$emotion, $strength, $jsonContent, $soundCode]);
+                            $updatedCount++;
+                        } else {
+                            // Insert new record
+                            $stmt = $conn->prepare("
+                                INSERT INTO sound_samples (sound_code, result_num, emotion, strength, json) 
+                                VALUES (?, 0, ?, ?, ?)
+                            ");
+                            $stmt->execute([$soundCode, $emotion, $strength, $jsonContent]);
+                            echo "<p class='success'>✓ Added: $soundCode (emotion: $emotion, strength: $strength)</p>";
+                            $addedCount++;
+                        }
+                    } catch (Exception $e) {
+                        echo "<p class='error'>✗ Error processing $soundCode: " . $e->getMessage() . "</p>";
+                        $errorCount++;
+                    }
+                } else {
+                    echo "<p class='warning'>⚠ Could not parse filename format: $fullFilename</p>";
+                    $errorCount++;
                 }
             }
-            
-            echo "<h3>Summary:</h3>";
-            echo "<ul>";
-            echo "<li><strong>Added:</strong> $addedCount</li>";
-            echo "<li><strong>Skipped:</strong> $skippedCount</li>";
-            echo "<li><strong>Total files:</strong> " . count($soundFiles) . "</li>";
-            echo "</ul>";
         }
+        
+        echo "<h3>Summary:</h3>";
+        echo "<ul>";
+        echo "<li><strong>Added:</strong> $addedCount</li>";
+        echo "<li><strong>Updated:</strong> $updatedCount</li>";
+        echo "<li><strong>Errors:</strong> $errorCount</li>";
+        echo "<li><strong>Total lines processed:</strong> " . count($lines) . "</li>";
+        echo "</ul>";
     }
     
     echo "<h2 class='success'>✓ Database Setup Complete!</h2>";
@@ -161,6 +237,21 @@ try {
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     echo "<p class='success'>✓ Database connected successfully</p>";
     echo "<p>Sound samples in database: <strong>" . $result['total'] . "</strong></p>";
+    
+    // Show sample of data with new columns
+    echo "<h3>Sample Data:</h3>";
+    $stmt = $conn->query("SELECT sound_code, emotion, strength, CASE WHEN json IS NULL THEN 'No' ELSE 'Yes' END as has_json FROM sound_samples LIMIT 5");
+    echo "<table border='1' cellpadding='5' cellspacing='0'>";
+    echo "<tr><th>Sound Code</th><th>Emotion</th><th>Strength</th><th>Has JSON</th></tr>";
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        echo "<tr>";
+        echo "<td>" . htmlspecialchars($row['sound_code']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['emotion']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['strength']) . "</td>";
+        echo "<td>" . htmlspecialchars($row['has_json']) . "</td>";
+        echo "</tr>";
+    }
+    echo "</table>";
     
 } catch (Exception $e) {
     echo "<h2 class='error'>✗ Database Setup Failed</h2>";

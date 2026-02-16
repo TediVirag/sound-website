@@ -6,7 +6,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #f8b1ac 0%, #6e4cc5 100%);
+    background: linear-gradient(135deg, #73d9bc 0%, #5992CE 100%);
     min-height: 100vh;
     padding: 20px;
 }
@@ -34,7 +34,7 @@ h1 {
 }
 
 h2 {
-    color: #6e4cc5;
+    color: #5992CE;
     font-size: 20px;
     margin-bottom: 20px;
     padding-bottom: 10px;
@@ -71,13 +71,54 @@ h3 {
     margin-bottom: 20px;
 }
 
+/* Info icon styling */
+.info-icon {
+    display: inline-block;
+    color: #5992CE;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: help;
+    margin-left: 3px;
+    margin-bottom: -5px;
+    position: relative;
+    vertical-align: text-bottom;
+}
+
+.info-icon:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: normal;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.info-icon:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 115%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #333;
+    z-index: 1000;
+}
+
 /* Audio player styling */
 .audio-player {
     margin: 20px 0;
     padding: 15px;
     background: linear-gradient(135deg, rgba(248, 177, 172, 0.1) 0%, rgba(110, 76, 197, 0.1) 100%);
     border-radius: 10px;
-    border: 2px solid #f8b1ac;
+    border: 2px solid #73d9bc;
 }
 
 .audio-player audio {
@@ -92,7 +133,7 @@ h3 {
 
 .audio-player audio::-webkit-media-controls-play-button,
 .audio-player audio::-webkit-media-controls-pause-button {
-    background-color: #6e4cc5;
+    background-color: #5992CE;
     border-radius: 50%;
 }
 
@@ -129,7 +170,7 @@ input[type="number"]:focus,
 select:focus,
 textarea:focus {
     outline: none;
-    border-color: #6e4cc5;
+    border-color: #5992CE;
 }
 
 select {
@@ -171,9 +212,9 @@ textarea {
 .add-rating-btn,
 .remove-rating-btn {
     padding: 10px 20px;
-    border: 2px solid #6e4cc5;
+    border: 2px solid #5992CE;
     background: white;
-    color: #6e4cc5;
+    color: #5992CE;
     border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
@@ -183,25 +224,25 @@ textarea {
 
 .add-rating-btn:hover,
 .remove-rating-btn:hover {
-    background: #6e4cc5;
+    background: #5992CE;
     color: white;
 }
 
 .remove-rating-btn {
-    border-color: #f8b1ac;
-    color: #f8b1ac;
+    border-color: #73d9bc;
+    color: #73d9bc;
     margin-top: 10px;
 }
 
 .remove-rating-btn:hover {
-    background: #f8b1ac;
+    background: #73d9bc;
     color: white;
 }
 
 .submit-btn {
     width: 100%;
     padding: 15px;
-    background: linear-gradient(135deg, #f8b1ac 0%, #6e4cc5 100%);
+    background: linear-gradient(135deg, #73d9bc 0%, #5992CE 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -232,15 +273,15 @@ textarea {
 
 .message.success {
     background-color: #f5f0ff;
-    color: #6e4cc5;
-    border: 2px solid #6e4cc5;
+    color: #5992CE;
+    border: 2px solid #5992CE;
     display: block;
 }
 
 .message.error {
     background-color: #fff5f4;
     color: #d32f2f;
-    border: 2px solid #f8b1ac;
+    border: 2px solid #73d9bc;
     display: block;
 }
 
@@ -402,7 +443,7 @@ input, select, textarea {
     flex-shrink: 0;
     width: 18px; 
     height: 18px; 
-    accent-color: #f8b1ac; 
+    accent-color: #73d9bc; 
     vertical-align: middle; 
     cursor: pointer; 
     margin-right: 18px; 
@@ -427,7 +468,7 @@ button#agreeButton {
     display: block;
     margin: 20px 0 0 auto;
     padding: 10px 20px;
-    background: linear-gradient(135deg, #f8b1ac 0%, #6e4cc5 100%);
+    background: linear-gradient(135deg, #73d9bc 0%, #5992CE 100%);
     color: white;
     border: none;
     border-radius: 8px;

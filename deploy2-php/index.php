@@ -343,11 +343,8 @@
             newRating.className = 'emotion-rating-item';
             newRating.dataset.index = index;
 
-            // Extract filename for display
-            const filename = soundPath.split(/[/\\]/).pop().replace(/\.wav$/i, '');
-
             newRating.innerHTML = `
-                <h3>Sound #${index + 1} - ${filename}</h3>
+                <h3>Sound #${index + 1}</h3>
                 
                 <!-- Audio Player -->
                 <div class="audio-player">
@@ -372,7 +369,10 @@
                 </div>
                 
                 <div class="form-group" id="rating1-group-${index}">
-                    <label for="rating1_${index}">Primary Rating (1-5) *</label>
+                    <label for="rating1_${index}">
+                        Primary Rating (1-5) *
+                        <span class="info-icon" data-tooltip="Rate the strength of the emotion: 1 = weakest, 5 = strongest">ⓘ</span>
+                    </label>
                     <input type="number" id="rating1_${index}" name="rating1_${index}" class="rating-input" data-index="${index}" data-type="primary" min="1" max="5" step="1" required>
                     <div class="error-message">Please provide a rating between 1 and 5.</div>
                 </div>
@@ -392,7 +392,10 @@
                 </div>
                 
                 <div class="form-group" id="rating2-group-${index}">
-                    <label for="rating2_${index}">Secondary Rating (1-5)</label>
+                    <label for="rating2_${index}">
+                        Secondary Rating (1-5)
+                        <span class="info-icon" data-tooltip="Rate the strength of the emotion: 1 = weakest, 5 = strongest">ⓘ</span>
+                    </label>
                     <input type="number" id="rating2_${index}" name="rating2_${index}" class="rating-input" data-index="${index}" data-type="secondary" min="1" max="5" step="1">
                     <div class="error-message">Please provide a rating between 1 and 5.</div>
                 </div>

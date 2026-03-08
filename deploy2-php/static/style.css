@@ -112,6 +112,38 @@ h3 {
     z-index: 1000;
 }
 
+/* Basic styling for the language switcher */
+.lang-switcher {
+    text-align: right;
+    padding: 10px 0;
+    margin-bottom: 15px;
+}
+
+.lang-switcher button {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border: 2px solid #ffffff;
+    padding: 6px 16px;
+    margin-left: 8px;
+    cursor: pointer;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.lang-switcher button:hover {
+    background: rgba(255, 255, 255, 0.4);
+    color: #ffffff;
+}
+
+.lang-switcher button.active {
+    background: #ffffff;
+    color: #5992CE;
+    border-color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
 /* Audio player styling */
 .audio-player {
     margin: 20px 0;

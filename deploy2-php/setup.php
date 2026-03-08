@@ -170,7 +170,7 @@ try {
                     $counter = $fileMatches[3];
                     
                     // Construct JSON file path
-                    $jsonPath = "static/input_jsons/$emotion/{$emotion}_{$strength}_{$counter}.json";
+                    $jsonPath = "static/input_jsons/{$emotion}_{$strength}_{$counter}.json";
                     
                     $jsonContent = null;
                     if (file_exists($jsonPath)) {

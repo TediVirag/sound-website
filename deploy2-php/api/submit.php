@@ -76,6 +76,17 @@ try {
             SET result_num = result_num + 1
             WHERE sound_code = ?
         ");
+
+        // Reusable convert function
+        $convertEmotion = fn($e) => match($e) {
+            'Surprise'  => 'surprise',
+            'Sadness'   => 'sad',
+            'Happiness' => 'happy',
+            'Anger'     => 'angry',
+            'Disgust'   => 'disgust',
+            'Fear'      => 'fear',
+            default     => strtolower($e) // Fallback if no match is found
+        };
         
         foreach ($data['results'] as $result) {
             // Validate result data
@@ -86,9 +97,9 @@ try {
             $stmtResult->execute([
                 $userCode,
                 $result['sound_code'],
-                $result['emotion1'],
+                $convertEmotion($result['emotion1']),
                 floatval($result['rating1']),
-                !empty($result['emotion2']) ? $result['emotion2'] : null,
+                !empty($result['emotion2']) ? $convertEmotion($result['emotion2']) : null,
                 !empty($result['rating2']) ? floatval($result['rating2']) : null
             ]);
             

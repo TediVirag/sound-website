@@ -2,6 +2,7 @@
 /**
  * Database Setup Script - Updated for PostgreSQL 9.4
  * Needs _file_pairings.txt and input_jsons inside static folder!!!
+ * how to run setup.php: https://tedivirag.web.elte.hu/setup.php
  */
 
 require_once 'includes/config.php';
